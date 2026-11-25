@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7fb">
+  <title>Weather — Matara, Sri Lanka</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --ink: #17283b;
+      --muted: #718198;
+      --panel: rgba(255, 255, 255, .76);
+      --panel-strong: #fff;
+      --line: rgba(24, 49, 77, .09);
+      --accent: #f0a346;
+      --sky: #e9f4fb;
+      --shadow: 0 22px 70px rgba(44, 75, 105, .11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 46px 20px;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, .96), transparent 55%),
+        linear-gradient(160deg, #f1f7fc 0%, #edf3f7 48%, #f8f6f1 100%);
+      font-size: 15px;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .app { width: min(100%, 590px); margin: 0 auto; }
+    .topline { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 20px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 720; letter-spacing: -.02em; }
+    .brand-mark {
+      display: grid; width: 34px; height: 34px; place-items: center; border-radius: 12px;
+      color: #fff; background: linear-gradient(145deg, #f5bb60, #ef8f48);
+      box-shadow: 0 5px 13px rgba(239, 143, 72, .25);
+    }
+    .brand-mark svg { width: 20px; }
+    .live-label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #54b784; box-shadow: 0 0 0 3px rgba(84, 183, 132, .14); }
+
+    .search {
+      display: flex; align-items: center; gap: 10px; height: 52px; padding: 5px 6px 5px 16px;
+      border: 1px solid var(--line); border-radius: 17px; background: var(--panel);
+      box-shadow: 0 8px 26px rgba(44, 75, 105, .045); backdrop-filter: blur(12px);
+    }
+    .search svg { flex: 0 0 auto; width: 18px; color: #8292a5; }
+    .search input { flex: 1; min-width: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 14px; }
+    .search input::placeholder { color: #9aa8b8; }
+    .search button {
+      height: 40px; padding: 0 17px; border: 0; border-radius: 12px; color: white; background: #203d59;
+      font-size: 13px; font-weight: 650; cursor: pointer; transition: background .2s, transform .2s;
+    }
+    .search button:hover { background: #315a7d; transform: translateY(-1px); }
+    .search button:focus-visible, .search input:focus-visible { outline: 3px solid rgba(71, 145, 198, .42); outline-offset: 3px; }
+
+    .hero {
+      position: relative; overflow: hidden; min-height: 320px; margin-top: 18px; padding: 30px 32px 26px;
+      border: 1px solid rgba(255, 255, 255, .72); border-radius: 25px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, .94), rgba(255, 255, 255, .64));
+      box-shadow: var(--shadow); backdrop-filter: blur(15px);
+    }
+    .hero::after {
+      position: absolute; top: -116px; right: -92px; width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 207, 135, .30), rgba(255, 207, 135, 0) 69%);
+      content: ""; pointer-events: none;
+    }
+    .hero-heading { position: relative; z-index: 1; }
+    .eyebrow { margin: 0 0 7px; color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(24px, 5vw, 29px); line-height: 1.15; letter-spacing: -.045em; }
+    .country { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+    .hero-main { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 23px; }
+    .temperature { display: flex; align-items: flex-start; font-size: clamp(74px, 17vw, 98px); font-weight: 330; line-height: .96; letter-spacing: -.09em; }
+    .temperature .degree { margin: 10px 0 0 5px; font-size: 36px; font-weight: 400; letter-spacing: -.05em; }
+    .condition { margin: 13px 0 0 4px; color: #53677c; font-size: 14px; font-weight: 560; }
+    .weather-art { flex: 0 0 auto; width: 142px; height: 132px; margin: -4px 8px 0 0; color: var(--accent); filter: drop-shadow(0 13px 12px rgba(237, 170, 88, .18)); }
+    .weather-art svg { width: 100%; height: 100%; overflow: visible; }
+    .hero-bottom { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 14px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .metric { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .metric-icon { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 11px; color: #65809b; background: rgba(228, 238, 247, .72); }
+    .metric-icon svg { width: 17px; height: 17px; }
+    .metric-copy { min-width: 0; }
+    .metric-label { display: block; color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .metric-value { display: block; margin-top: 2px; font-size: 13px; font-weight: 680; white-space: nowrap; }
+
+    .forecast-section { margin-top: 25px; }
+    .section-heading { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 12px; }
+    .section-heading h2 { margin: 0; font-size: 15px; font-weight: 720; letter-spacing: -.015em; }
+    .section-heading span { color: var(--muted); font-size: 12px; }
+    .forecast { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .day-card {
+      display: flex; min-height: 154px; flex-direction: column; align-items: center; padding: 14px 7px 12px;
+      border: 1px solid var(--line); border-radius: 17px; background: var(--panel);
+      box-shadow: 0 7px 20px rgba(44, 75, 105, .035); backdrop-filter: blur(12px);
+    }
+    .day-name { font-size: 12px; font-weight: 670; }
+    .day-icon { width: 43px; height: 40px; margin: 9px 0 7px; color: var(--day-accent, #eba34e); }
+    .day-icon svg { width: 100%; height: 100%; }
+    .day-condition { max-width: 100%; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .day-temps { display: flex; gap: 8px; margin-top: 9px; font-size: 12px; font-weight: 700; }
+    .day-low { color: #8b9aac; font-weight: 520; }
+    .trip-section { margin-top: 26px; }
+    .trip-intro { margin: 4px 2px 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .route-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-bottom: 10px; }
+    .route-field { min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px; outline: 0; color: var(--ink); background: var(--panel); font-size: 13px; }
+    .route-field:focus-visible { outline: 3px solid rgba(71, 145, 198, .35); }
+    .route-submit { padding: 0 13px; border: 0; border-radius: 12px; color: #fff; background: #203d59; font-size: 13px; font-weight: 650; cursor: pointer; }
+    .route-submit:hover { background: #315a7d; }
+    .route-options { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 2px 12px; }
+    .route-options label { color: var(--muted); font-size: 12px; }
+    .route-options input { margin-left: 7px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--panel); font-size: 12px; }
+    .map-frame { position: relative; overflow: hidden; height: 340px; border: 1px solid var(--line); border-radius: 19px; background: #e7edf0; box-shadow: 0 10px 28px rgba(44, 75, 105, .08); }
+    #route-map { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+    .map-controls { position: absolute; top: 11px; right: 11px; display: grid; overflow: hidden; border: 1px solid rgba(30, 50, 70, .16); border-radius: 10px; box-shadow: 0 2px 8px #18314922; }
+    .map-controls button { width: 34px; height: 34px; border: 0; background: #fff; color: #203d59; font-size: 19px; cursor: pointer; }
+    .map-controls button + button { border-top: 1px solid #e6ebef; }
+    .map-help { position: absolute; bottom: 31px; left: 10px; max-width: calc(100% - 20px); padding: 7px 10px; border-radius: 9px; color: #203d59; background: rgba(255,255,255,.92); box-shadow: 0 2px 8px #18314922; font-size: 11px; }
+    .map-attribution { position: absolute; right: 0; bottom: 0; padding: 3px 6px; color: #34495c; background: rgba(255,255,255,.82); font-size: 10px; }
+    .map-attribution a { color: inherit; }
+    .map-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 2px 0; color: var(--muted); font-size: 11px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--legend); }
+    .route-summary { margin-top: 11px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .route-summary[hidden] { display: none; }
+    .route-summary-title { margin: 0; font-size: 13px; font-weight: 700; }
+    .route-summary-meta { margin: 4px 0 11px; color: var(--muted); font-size: 11px; }
+    .route-stops { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 7px; }
+    .route-stop { padding: 8px 9px; border-radius: 10px; background: rgba(117, 145, 170, .09); }
+    .route-stop-name { overflow: hidden; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+    .route-stop-weather { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .route-stop-rain { margin-top: 3px; font-size: 11px; font-weight: 700; }
+    .route-status { min-height: 18px; margin: 8px 3px 0; color: var(--muted); font-size: 11px; }
+    .route-status.error { color: #bf634c; }
+    .status { min-height: 20px; margin: 11px 3px 0; color: var(--muted); font-size: 12px; }
+    .status.error { color: #bf634c; }
+    .footer { margin: 10px 2px 0; color: #8a98a8; font-size: 11px; text-align: center; }
+
+    @media (max-width: 480px) {
+      body { padding: 26px 15px; }
+      .hero { min-height: 305px; padding: 25px 22px 22px; }
+      .weather-art { width: 112px; height: 112px; margin-right: 0; }
+      .hero-main { gap: 4px; }
+      .hero-bottom { gap: 8px; }
+      .metric { gap: 6px; }
+      .metric-icon { flex-basis: 30px; width: 30px; height: 30px; }
+      .forecast { gap: 7px; }
+      .day-card { min-height: 146px; padding-right: 4px; padding-left: 4px; }
+      .day-temps { gap: 5px; font-size: 11px; }
+      .route-form { grid-template-columns: 1fr 1fr; }
+      .route-submit { grid-column: 1 / -1; height: 42px; }
+      .map-frame { height: 300px; }
+      .route-options { align-items: flex-start; }
+      .route-options input { width: 165px; }
+    }
+    @media (max-width: 360px) {
+      .weather-art { width: 93px; }
+      .metric-label { font-size: 10px; }
+      .metric-value { font-size: 12px; }
+      .metric-icon { display: none; }
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --ink: #e8eef5; --muted: #98a9bc; --panel: rgba(29, 43, 58, .78);
+        --panel-strong: #1d2b3a; --line: rgba(216, 230, 243, .10); --sky: #15283a;
+        --shadow: 0 22px 70px rgba(0, 0, 0, .28);
+      }
+      body {
+        background: radial-gradient(ellipse at 50% 0%, rgba(57, 82, 105, .62), transparent 58%),
+          linear-gradient(160deg, #142333 0%, #182838 50%, #202b34 100%);
+      }
+      .hero { border-color: rgba(255, 255, 255, .08); background: linear-gradient(135deg, rgba(37, 55, 73, .94), rgba(29, 43, 58, .78)); }
+      .hero::after { opacity: .48; }
+      .condition { color: #b7c5d3; }
+      .metric-icon { color: #a8c0d7; background: rgba(92, 123, 151, .20); }
+      .search button { background: #d78c47; }
+      .search button:hover { background: #e39b58; }
+      .day-card { background: rgba(29, 43, 58, .76); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topline">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2.8v2.1M12 19.1v2.1M4.6 5.9l1.5 1.5m11.8 9.2 1.5 1.5M2.8 12h2.1m14.2 0h2.1M4.6 18.1l1.5-1.5m11.8-9.2 1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4.3" fill="currentColor"/></svg>
+        </span>
+        <span>Daylight</span>
+      </div>
+      <div class="live-label"><span class="live-dot" id="live-dot"></span><span id="live-label">Weather now</span></div>
+    </header>
+
+    <form class="search" id="search-form" role="search">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="city-search" type="search" placeholder="Search for a city…" aria-label="Search for a city" autocomplete="off">
+      <button type="submit">Search</button>
+    </form>
+
+    <section class="hero" aria-labelledby="city-name">
+      <div class="hero-heading">
+        <p class="eyebrow" id="today-label">Today</p>
+        <h1 id="city-name">Matara</h1>
+        <p class="country" id="country-name">Sri Lanka</p>
+      </div>
+      <div class="hero-main">
+        <div>
+          <div class="temperature"><span id="temperature">29</span><span class="degree">°</span></div>
+          <p class="condition" id="condition">Partly cloudy</p>
+        </div>
+        <div class="weather-art" id="current-icon" aria-hidden="true"></div>
+      </div>
+      <div class="hero-bottom">
+        <div class="metric">
+          <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.2s-6.2 6.7-6.2 11a6.2 6.2 0 0 0 12.4 0c0-4.3-6.2-11-6.2-11Z" stroke="currentColor" stroke-width="1.7"/><path d="M9 15.2a3.1 3.1 0 0 0 3.1 3.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+          <span class="metric-copy"><span class="metric-label">Humidity</span><span class="metric-value" id="humidity">76%</span></span>
+        </div>
+        <div class="metric">
+          <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 8.5h11.3a2.3 2.3 0 1 0-2.2-2.9M2.5 12.5h16a2.5 2.5 0 1 1-2.4 3.2M4 16.5h7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+          <span class="metric-copy"><span class="metric-label">Wind</span><span class="metric-value" id="wind">14 km/h</span></span>
+        </div>
+        <div class="metric">
+          <span class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5v17M6.5 6.3l11 11.4M17.5 6.3l-11 11.4M3.5 12h17M4.5 8.5l15 7M19.5 8.5l-15 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+          <span class="metric-copy"><span class="metric-label">Feels like</span><span class="metric-value" id="feels-like">33°</span></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="trip-section" aria-labelledby="trip-title">
+      <div class="section-heading"><h2 id="trip-title">Plan a ride</h2><span>Weather along your route</span></div>
+      <p class="trip-intro">Set your start and destination, or click two points on the map. See rain and clear-weather conditions along the bike route.</p>
+      <form class="route-form" id="route-form">
+        <input class="route-field" id="route-start" placeholder="Start (e.g. Matara)" aria-label="Route start" autocomplete="off">
+        <input class="route-field" id="route-end" placeholder="Destination (e.g. Galle)" aria-label="Route destination" autocomplete="off">
+        <button class="route-submit" type="submit">Check route</button>
+      </form>
+      <div class="route-options">
+        <label for="trip-time">Check weather at</label>
+        <input id="trip-time" type="datetime-local" aria-label="Trip departure date and time">
+      </div>
+      <div class="map-frame">
+        <canvas id="route-map" aria-label="Interactive map. Click to set your trip start and destination. Use arrow keys to pan and plus or minus to zoom." role="img" tabindex="0"></canvas>
+        <div class="map-controls" aria-label="Map zoom controls">
+          <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+          <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+        </div>
+        <div class="map-help" id="map-help">Click the map to set your start, then destination</div>
+        <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors</div>
+      </div>
+      <div class="map-legend" aria-label="Route weather legend">
+        <span class="legend-item"><span class="legend-dot" style="--legend:#42a879"></span>Clear / low rain chance</span>
+        <span class="legend-item"><span class="legend-dot" style="--legend:#edaa45"></span>Possible showers</span>
+        <span class="legend-item"><span class="legend-dot" style="--legend:#438fc2"></span>Rain likely</span>
+      </div>
+      <div class="route-summary" id="route-summary" hidden>
+        <p class="route-summary-title" id="route-summary-title"></p>
+        <p class="route-summary-meta" id="route-summary-meta"></p>
+        <div class="route-stops" id="route-stops"></div>
+      </div>
+      <p class="route-status" id="route-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="forecast-section" aria-labelledby="forecast-title">
+      <div class="section-heading"><h2 id="forecast-title">5-day forecast</h2><span id="forecast-subtitle">Coming up</span></div>
+      <div class="forecast" id="forecast"></div>
+    </section>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <p class="footer">Weather data by Open-Meteo</p>
+  </main>
+
+  <script>
+    const $ = (selector) => document.querySelector(selector);
+    const fallback = {
+      current: { temperature_2m: 29, apparent_temperature: 33, relative_humidity_2m: 76, wind_speed_10m: 14, weather_code: 2 },
+      daily: {
+        time: [], weather_code: [2, 1, 3, 61, 2],
+        temperature_2m_max: [30, 30, 29, 28, 30], temperature_2m_min: [25, 25, 24, 24, 25],
+        precipitation_probability_max: [20, 10, 25, 70, 30]
+      },
+      timezone: "Asia/Colombo"
+    };
+    const conditions = [
+      [[0], "Clear sky"], [[1], "Mostly clear"], [[2], "Partly cloudy"], [[3], "Overcast"],
+      [[45, 48], "Foggy"], [[51, 53, 55, 56, 57], "Drizzle"], [[61, 63, 65, 66, 67], "Rain"],
+      [[71, 73, 75, 77], "Snow"], [[80, 81, 82], "Rain showers"], [[85, 86], "Snow showers"],
+      [[95, 96, 99], "Thunderstorm"]
+    ];
+
+    function conditionFor(code) {
+      return conditions.find(([codes]) => codes.includes(code))?.[1] || "Variable conditions";
+    }
+
+    function iconFor(code, isDay = true) {
+      if (code === 0 && !isDay) return `<svg viewBox="0 0 64 64" fill="none"><path d="M43 10a20 20 0 1 0 12 35 21 21 0 0 1-12-35Z" fill="#9db4ca"/><circle cx="46" cy="17" r="2" fill="#f3c76f"/><circle cx="54" cy="29" r="1.5" fill="#f3c76f"/></svg>`;
+      if (code === 0 || code === 1) return `<svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="13" fill="#f6bd5d"/><g stroke="#f6bd5d" stroke-width="3" stroke-linecap="round"><path d="M32 5v8M32 51v8M5 32h8m38 0h8M13 13l6 6m26 26 6 6M51 13l-6 6M19 45l-6 6"/></g></svg>`;
+      if (code === 2) return `<svg viewBox="0 0 64 64" fill="none"><circle cx="40" cy="22" r="12" fill="#f6bd5d"/><path d="M19 47h28a9 9 0 0 0 0-18 15 15 0 0 0-28-1 10 10 0 0 0 0 19Z" fill="#b9d1e4"/><path d="M19 47h28a9 9 0 0 0 0-18 15 15 0 0 0-28-1 10 10 0 0 0 0 19Z" stroke="white" stroke-width="2"/></svg>`;
+      if ([45, 48].includes(code)) return `<svg viewBox="0 0 64 64" fill="none"><path d="M15 27h34a8 8 0 0 1 0 16H13m8-25h28a6 6 0 0 1 0 12" stroke="#a9bdcf" stroke-width="5" stroke-linecap="round"/></svg>`;
+      if ([3, 51, 53, 55, 56, 57].includes(code)) return `<svg viewBox="0 0 64 64" fill="none"><path d="M16 36h33a9 9 0 0 0 0-18 15 15 0 0 0-28-1 10 10 0 0 0-5 19Z" fill="#b8cbdc" stroke="white" stroke-width="2"/><path d="m24 43-3 7m15-7-3 7m15-7-3 7" stroke="#69a9d1" stroke-width="3" stroke-linecap="round"/></svg>`;
+      if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return `<svg viewBox="0 0 64 64" fill="none"><path d="M15 34h34a9 9 0 0 0 0-18 15 15 0 0 0-28-1 10 10 0 0 0-6 19Z" fill="#aebfd0" stroke="white" stroke-width="2"/><path d="m23 40-4 9m15-9-4 9m15-9-4 9" stroke="#5fa5d4" stroke-width="3" stroke-linecap="round"/></svg>`;
+      if ([95, 96, 99].includes(code)) return `<svg viewBox="0 0 64 64" fill="none"><path d="M15 34h34a9 9 0 0 0 0-18 15 15 0 0 0-28-1 10 10 0 0 0-6 19Z" fill="#879aaf" stroke="white" stroke-width="2"/><path d="m34 35-8 12h8l-3 10 12-15h-9l4-7Z" fill="#f4b94f"/></svg>`;
+      if ([71, 73, 75, 77, 85, 86].includes(code)) return `<svg viewBox="0 0 64 64" fill="none"><path d="M15 34h34a9 9 0 0 0 0-18 15 15 0 0 0-28-1 10 10 0 0 0-6 19Z" fill="#b8cbdc" stroke="white" stroke-width="2"/><path d="M24 43v8m-4-4h8m10-4v8m-4-4h8m7-4v8m-4-4h8" stroke="#eaf4fb" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+      return `<svg viewBox="0 0 64 64" fill="none"><path d="M16 38h32a9 9 0 0 0 0-18 15 15 0 0 0-28-1 10 10 0 0 0-4 19Z" fill="#b8cbdc" stroke="white" stroke-width="2"/><path d="m23 44-3 7m15-7-3 7m15-7-3 7" stroke="#69a9d1" stroke-width="3" stroke-linecap="round"/></svg>`;
+    }
+
+    function dayName(dateString, index) {
+      if (index === 0) return "Today";
+      return new Intl.DateTimeFormat(undefined, { weekday: "short", timeZone: "UTC" })
+        .format(new Date(`${dateString}T12:00:00Z`));
+    }
+
+    function render(data, place, isFallback = false) {
+      const current = data.current;
+      const daily = data.daily;
+      $("#city-name").textContent = place.name;
+      $("#country-name").textContent = [place.admin1, place.country].filter(Boolean).join(", ");
+      $("#temperature").textContent = Math.round(current.temperature_2m);
+      $("#condition").textContent = conditionFor(current.weather_code);
+      $("#humidity").textContent = `${current.relative_humidity_2m}%`;
+      $("#wind").textContent = `${Math.round(current.wind_speed_10m)} km/h`;
+      $("#feels-like").textContent = `${Math.round(current.apparent_temperature)}°`;
+      $("#current-icon").innerHTML = iconFor(current.weather_code, current.is_day !== 0);
+      $("#today-label").textContent = new Intl.DateTimeFormat(undefined, {
+        weekday: "long", timeZone: data.timezone || "UTC"
+      }).format(new Date());
+      $("#forecast").innerHTML = daily.time.slice(0, 5).map((date, index) => {
+        const code = daily.weather_code[index];
+        return `<article class="day-card">
+          <span class="day-name">${dayName(date, index)}</span>
+          <span class="day-icon" aria-hidden="true">${iconFor(code)}</span>
+          <span class="day-condition">${conditionFor(code)}</span>
+          <span class="day-temps"><span>${Math.round(daily.temperature_2m_max[index])}°</span><span class="day-low">${Math.round(daily.temperature_2m_min[index])}°</span></span>
+        </article>`;
+      }).join("");
+      $("#live-label").textContent = isFallback ? "Sample weather" : "Live weather";
+      $("#live-dot").style.background = isFallback ? "#e1a34b" : "#54b784";
+      $("#status").textContent = isFallback ? "Showing sample weather — live data is unavailable right now." : "";
+      $("#status").classList.toggle("error", isFallback);
+      $("#forecast-subtitle").textContent = "High / low";
+      document.title = `Weather — ${place.name}, ${place.country || ""}`;
+    }
+
+    function makeFallbackDates() {
+      const dates = [];
+      const today = new Date();
+      for (let i = 0; i < 5; i++) {
+        const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + i));
+        dates.push(day.toISOString().slice(0, 10));
+      }
+      return { ...fallback, daily: { ...fallback.daily, time: dates } };
+    }
+
+    async function getWeather(latitude, longitude) {
+      const params = new URLSearchParams({
+        latitude, longitude, current: "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,wind_speed_10m,weather_code",
+        daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+        forecast_days: "5", timezone: "auto"
+      });
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+      if (!response.ok) throw new Error("Weather service unavailable");
+      return response.json();
+    }
+
+    async function searchCity(query) {
+      const params = new URLSearchParams({ name: query, count: "10", language: "en", format: "json" });
+      const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${params}`);
+      if (!response.ok) throw new Error("City search is unavailable");
+      const result = await response.json();
+      if (!result.results?.length) throw new Error("No matching city found. Try another spelling.");
+      const normalizedQuery = query.trim().toLocaleLowerCase();
+      return result.results.find((place) => place.name.toLocaleLowerCase() === normalizedQuery) || result.results[0];
+    }
+
+    async function loadPlace(place) {
+      $("#status").textContent = "Finding the latest forecast…";
+      $("#status").classList.remove("error");
+      $("#live-label").textContent = "Updating";
+      try {
+        const data = await getWeather(place.latitude, place.longitude);
+        render(data, place);
+      } catch {
+        render(makeFallbackDates(), place, true);
+      }
+    }
+
+    $("#search-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const query = $("#city-search").value.trim();
+      if (!query) { $("#city-search").focus(); return; }
+      const button = $("#search-form button");
+      button.disabled = true;
+      button.textContent = "Searching…";
+      $("#status").classList.remove("error");
+      try {
+        const place = await searchCity(query);
+        await loadPlace(place);
+        $("#city-search").value = "";
+      } catch (error) {
+        $("#status").textContent = error.message || "Could not find that city.";
+        $("#status").classList.add("error");
+        $("#live-label").textContent = "Search unavailable";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Search";
+      }
+    });
+
+    const mapCanvas = $("#route-map");
+    const mapContext = mapCanvas.getContext("2d");
+    const tileCache = new Map();
+    const mapState = { center: { latitude: 5.9549, longitude: 80.555 }, zoom: 9 };
+    let routeStart = null;
+    let routeEnd = null;
+    let routeGeometry = [];
+    let routeWeather = [];
+    let clickCount = 0;
+    let activePointer = null;
+    let mapMoved = false;
+
+    function worldPoint(latitude, longitude, zoom) {
+      const size = 256 * 2 ** zoom;
+      const sin = Math.sin(Math.max(-85.0511, Math.min(85.0511, latitude)) * Math.PI / 180);
+      return {
+        x: (longitude + 180) / 360 * size,
+        y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * size
+      };
+    }
+
+    function coordinateAt(point, zoom) {
+      const size = 256 * 2 ** zoom;
+      return {
+        longitude: point.x / size * 360 - 180,
+        latitude: Math.atan(Math.sinh(Math.PI * (1 - 2 * point.y / size))) * 180 / Math.PI
+      };
+    }
+
+    function screenPoint(location, width, height) {
+      const center = worldPoint(mapState.center.latitude, mapState.center.longitude, mapState.zoom);
+      const point = worldPoint(location.latitude, location.longitude, mapState.zoom);
+      const size = 256 * 2 ** mapState.zoom;
+      let dx = point.x - center.x;
+      if (dx > size / 2) dx -= size;
+      if (dx < -size / 2) dx += size;
+      return { x: width / 2 + dx, y: height / 2 + point.y - center.y };
+    }
+
+    function weatherColor(sample) {
+      if (!sample) return "#3f86b4";
+      const rainyCode = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(sample.code);
+      if (sample.rain >= 60 || (rainyCode && sample.rain >= 35)) return "#438fc2";
+      if (sample.rain >= 30 || rainyCode) return "#edaa45";
+      return "#42a879";
+    }
+
+    function requestTile(zoom, x, y) {
+      const limit = 2 ** zoom;
+      if (y < 0 || y >= limit) return null;
+      x = (x % limit + limit) % limit;
+      const key = `${zoom}/${x}/${y}`;
+      if (tileCache.has(key)) return tileCache.get(key);
+      const image = new Image();
+      tileCache.set(key, image);
+      image.onload = drawMap;
+      image.onerror = () => tileCache.delete(key);
+      image.src = `https://tile.openstreetmap.de/${zoom}/${x}/${y}.png`;
+      return image;
+    }
+
+    function drawMap() {
+      const rect = mapCanvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const ratio = window.devicePixelRatio || 1;
+      if (mapCanvas.width !== Math.round(rect.width * ratio) || mapCanvas.height !== Math.round(rect.height * ratio)) {
+        mapCanvas.width = Math.round(rect.width * ratio);
+        mapCanvas.height = Math.round(rect.height * ratio);
+      }
+      mapContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+      mapContext.fillStyle = "#e7edf0";
+      mapContext.fillRect(0, 0, rect.width, rect.height);
+      const center = worldPoint(mapState.center.latitude, mapState.center.longitude, mapState.zoom);
+      const left = center.x - rect.width / 2;
+      const top = center.y - rect.height / 2;
+      const firstX = Math.floor(left / 256);
+      const lastX = Math.floor((left + rect.width) / 256);
+      const firstY = Math.floor(top / 256);
+      const lastY = Math.floor((top + rect.height) / 256);
+      for (let tileY = firstY; tileY <= lastY; tileY++) {
+        for (let tileX = firstX; tileX <= lastX; tileX++) {
+          const image = requestTile(mapState.zoom, tileX, tileY);
+          if (image?.complete && image.naturalWidth) {
+            mapContext.drawImage(image, tileX * 256 - left, tileY * 256 - top, 256, 256);
+          }
+        }
+      }
+
+      if (routeGeometry.length > 1) {
+        const points = routeGeometry.map(([longitude, latitude]) => screenPoint({ latitude, longitude }, rect.width, rect.height));
+        const distances = [0];
+        for (let i = 1; i < routeGeometry.length; i++) {
+          const [lon1, lat1] = routeGeometry[i - 1];
+          const [lon2, lat2] = routeGeometry[i];
+          const radians = Math.PI / 180;
+          const dLat = (lat2 - lat1) * radians;
+          const dLon = (lon2 - lon1) * radians;
+          const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * radians) * Math.cos(lat2 * radians) * Math.sin(dLon / 2) ** 2;
+          distances.push(distances[i - 1] + 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+        const total = distances.at(-1) || 1;
+        mapContext.lineCap = "round";
+        mapContext.lineJoin = "round";
+        mapContext.beginPath();
+        points.forEach((point, index) => index ? mapContext.lineTo(point.x, point.y) : mapContext.moveTo(point.x, point.y));
+        mapContext.strokeStyle = "rgba(255,255,255,.92)";
+        mapContext.lineWidth = 10;
+        mapContext.stroke();
+        for (let i = 1; i < points.length; i++) {
+          const progress = ((distances[i] + distances[i - 1]) / 2) / total;
+          const sample = routeWeather.length
+            ? routeWeather[Math.min(routeWeather.length - 1, Math.round(progress * (routeWeather.length - 1)))]
+            : null;
+          mapContext.beginPath();
+          mapContext.moveTo(points[i - 1].x, points[i - 1].y);
+          mapContext.lineTo(points[i].x, points[i].y);
+          mapContext.strokeStyle = weatherColor(sample);
+          mapContext.lineWidth = 6;
+          mapContext.stroke();
+        }
+        routeWeather.forEach((sample, index) => {
+          const point = screenPoint(sample, rect.width, rect.height);
+          mapContext.beginPath();
+          mapContext.arc(point.x, point.y, 7, 0, Math.PI * 2);
+          mapContext.fillStyle = "#fff";
+          mapContext.fill();
+          mapContext.beginPath();
+          mapContext.arc(point.x, point.y, 4.5, 0, Math.PI * 2);
+          mapContext.fillStyle = weatherColor(sample);
+          mapContext.fill();
+          mapContext.font = "600 10px system-ui, sans-serif";
+          mapContext.textAlign = "center";
+          mapContext.fillStyle = "#203d59";
+          mapContext.fillText(`${sample.rain}%`, point.x, point.y - 11);
+        });
+      }
+
+      [routeStart, routeEnd].forEach((location, index) => {
+        if (!location) return;
+        const point = screenPoint(location, rect.width, rect.height);
+        mapContext.beginPath();
+        mapContext.arc(point.x, point.y, 11, 0, Math.PI * 2);
+        mapContext.fillStyle = "#fff";
+        mapContext.fill();
+        mapContext.beginPath();
+        mapContext.arc(point.x, point.y, 8, 0, Math.PI * 2);
+        mapContext.fillStyle = index ? "#d96c58" : "#315c82";
+        mapContext.fill();
+        mapContext.fillStyle = "#fff";
+        mapContext.font = "700 10px system-ui, sans-serif";
+        mapContext.textAlign = "center";
+        mapContext.textBaseline = "middle";
+        mapContext.fillText(index ? "B" : "A", point.x, point.y + .5);
+        mapContext.textBaseline = "alphabetic";
+      });
+    }
+
+    function setMapZoom(zoom, anchor) {
+      const nextZoom = Math.max(5, Math.min(16, zoom));
+      if (nextZoom === mapState.zoom) return;
+      const rect = mapCanvas.getBoundingClientRect();
+      const focal = anchor || { x: rect.width / 2, y: rect.height / 2 };
+      const before = worldPoint(mapState.center.latitude, mapState.center.longitude, mapState.zoom);
+      const beforeLocation = coordinateAt({
+        x: before.x + focal.x - rect.width / 2,
+        y: before.y + focal.y - rect.height / 2
+      }, mapState.zoom);
+      const after = worldPoint(beforeLocation.latitude, beforeLocation.longitude, nextZoom);
+      mapState.zoom = nextZoom;
+      const offsetX = focal.x - rect.width / 2;
+      const offsetY = focal.y - rect.height / 2;
+      mapState.center = coordinateAt({ x: after.x - offsetX, y: after.y - offsetY }, nextZoom);
+      drawMap();
+    }
+
+    function mapPointFromEvent(event) {
+      const rect = mapCanvas.getBoundingClientRect();
+      const center = worldPoint(mapState.center.latitude, mapState.center.longitude, mapState.zoom);
+      return coordinateAt({
+        x: center.x + event.clientX - rect.left - rect.width / 2,
+        y: center.y + event.clientY - rect.top - rect.height / 2
+      }, mapState.zoom);
+    }
+
+    function updateRouteHint(text) {
+      $("#map-help").textContent = text;
+    }
+
+    function setMapEndpoint(location) {
+      const formatted = `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+      location.inputValue = formatted;
+      routeWeather = [];
+      routeGeometry = [];
+      $("#route-summary").hidden = true;
+      $("#route-status").textContent = "";
+      $("#route-status").classList.remove("error");
+      if (clickCount === 0 || clickCount >= 2) {
+        routeStart = location;
+        routeEnd = null;
+        clickCount = 1;
+        $("#route-start").value = formatted;
+        $("#route-end").value = "";
+        updateRouteHint("Start set — click the map again to choose a destination");
+      } else {
+        routeEnd = location;
+        clickCount = 2;
+        $("#route-end").value = formatted;
+        updateRouteHint("Route points set — check the route to see cycling weather");
+      }
+      drawMap();
+    }
+
+    mapCanvas.addEventListener("pointerdown", (event) => {
+      activePointer = { id: event.pointerId, x: event.clientX, y: event.clientY, center: { ...mapState.center } };
+      mapMoved = false;
+      mapCanvas.setPointerCapture(event.pointerId);
+    });
+    mapCanvas.addEventListener("pointermove", (event) => {
+      if (!activePointer || activePointer.id !== event.pointerId) return;
+      const dx = event.clientX - activePointer.x;
+      const dy = event.clientY - activePointer.y;
+      if (Math.abs(dx) + Math.abs(dy) > 4) mapMoved = true;
+      if (!mapMoved) return;
+      const center = worldPoint(activePointer.center.latitude, activePointer.center.longitude, mapState.zoom);
+      mapState.center = coordinateAt({ x: center.x - dx, y: center.y - dy }, mapState.zoom);
+      drawMap();
+    });
+    mapCanvas.addEventListener("pointerup", (event) => {
+      if (!activePointer || activePointer.id !== event.pointerId) return;
+      if (!mapMoved) setMapEndpoint(mapPointFromEvent(event));
+      activePointer = null;
+    });
+    mapCanvas.addEventListener("pointercancel", () => { activePointer = null; });
+    mapCanvas.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      const rect = mapCanvas.getBoundingClientRect();
+      setMapZoom(mapState.zoom + (event.deltaY < 0 ? 1 : -1), { x: event.clientX - rect.left, y: event.clientY - rect.top });
+    }, { passive: false });
+    mapCanvas.addEventListener("keydown", (event) => {
+      if (event.key === "+" || event.key === "=") setMapZoom(mapState.zoom + 1);
+      else if (event.key === "-") setMapZoom(mapState.zoom - 1);
+      else if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+        event.preventDefault();
+        const center = worldPoint(mapState.center.latitude, mapState.center.longitude, mapState.zoom);
+        const delta = 80;
+        if (event.key === "ArrowUp") center.y -= delta;
+        if (event.key === "ArrowDown") center.y += delta;
+        if (event.key === "ArrowLeft") center.x -= delta;
+        if (event.key === "ArrowRight") center.x += delta;
+        mapState.center = coordinateAt(center, mapState.zoom);
+        drawMap();
+      } else if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setMapEndpoint(mapState.center);
+      }
+    });
+    $("#zoom-in").addEventListener("click", () => setMapZoom(mapState.zoom + 1));
+    $("#zoom-out").addEventListener("click", () => setMapZoom(mapState.zoom - 1));
+    window.addEventListener("resize", drawMap);
+
+    function parseCoordinates(value) {
+      const match = value.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+      if (!match) return null;
+      const latitude = Number(match[1]);
+      const longitude = Number(match[2]);
+      if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) throw new Error("Coordinates must be latitude, longitude.");
+      return { latitude, longitude, name: "Map point", inputValue: value.trim() };
+    }
+
+    async function resolveRouteLocation(value, savedLocation) {
+      if (!value.trim()) throw new Error("Enter both a start and a destination.");
+      if (savedLocation?.inputValue === value.trim()) return savedLocation;
+      const coordinates = parseCoordinates(value);
+      if (coordinates) return coordinates;
+      const place = await searchCity(value.trim());
+      return { ...place, name: place.name, inputValue: value.trim() };
+    }
+
+    function fitRoute(geometry) {
+      const rect = mapCanvas.getBoundingClientRect();
+      const candidates = geometry.map(([longitude, latitude]) => ({ latitude, longitude }));
+      if (routeStart) candidates.push(routeStart);
+      if (routeEnd) candidates.push(routeEnd);
+      for (let zoom = 15; zoom >= 5; zoom--) {
+        const points = candidates.map(({ latitude, longitude }) => worldPoint(latitude, longitude, zoom));
+        const spanX = Math.max(...points.map((point) => point.x)) - Math.min(...points.map((point) => point.x));
+        const spanY = Math.max(...points.map((point) => point.y)) - Math.min(...points.map((point) => point.y));
+        if (spanX < rect.width * .72 && spanY < rect.height * .72) {
+          mapState.zoom = zoom;
+          break;
+        }
+      }
+      const zoomPoints = candidates.map(({ latitude, longitude }) => worldPoint(latitude, longitude, mapState.zoom));
+      mapState.center = coordinateAt({
+        x: (Math.min(...zoomPoints.map((point) => point.x)) + Math.max(...zoomPoints.map((point) => point.x))) / 2,
+        y: (Math.min(...zoomPoints.map((point) => point.y)) + Math.max(...zoomPoints.map((point) => point.y))) / 2
+      }, mapState.zoom);
+      drawMap();
+    }
+
+    function sampleRoute(geometry, count = 7) {
+      const cumulative = [0];
+      for (let index = 1; index < geometry.length; index++) {
+        const [lon1, lat1] = geometry[index - 1];
+        const [lon2, lat2] = geometry[index];
+        const radians = Math.PI / 180;
+        const dLat = (lat2 - lat1) * radians;
+        const dLon = (lon2 - lon1) * radians;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * radians) * Math.cos(lat2 * radians) * Math.sin(dLon / 2) ** 2;
+        cumulative.push(cumulative[index - 1] + 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+      }
+      const total = cumulative.at(-1) || 1;
+      return Array.from({ length: count }, (_, index) => {
+        const distance = total * index / (count - 1);
+        let segment = cumulative.findIndex((value) => value >= distance);
+        if (segment < 1) segment = 1;
+        const length = cumulative[segment] - cumulative[segment - 1] || 1;
+        const fraction = Math.max(0, Math.min(1, (distance - cumulative[segment - 1]) / length));
+        const [lon1, lat1] = geometry[segment - 1];
+        const [lon2, lat2] = geometry[segment];
+        return {
+          latitude: lat1 + (lat2 - lat1) * fraction,
+          longitude: lon1 + (lon2 - lon1) * fraction,
+          name: index === 0 ? "Start" : index === count - 1 ? "Destination" : `Route point ${index}`
+        };
+      });
+    }
+
+    function setDefaultTripTime() {
+      const time = new Date(Date.now() + 60 * 60 * 1000);
+      time.setMinutes(0, 0, 0);
+      const local = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      $("#trip-time").value = local;
+      $("#trip-time").max = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+
+    async function getRouteWeather(samples, tripTime) {
+      const params = new URLSearchParams({
+        latitude: samples.map((point) => point.latitude.toFixed(4)).join(","),
+        longitude: samples.map((point) => point.longitude.toFixed(4)).join(","),
+        hourly: "weather_code,precipitation_probability,temperature_2m",
+        forecast_days: "5",
+        timezone: "auto"
+      });
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+      if (!response.ok) throw new Error("Route weather service is unavailable.");
+      const payload = await response.json();
+      const locations = Array.isArray(payload) ? payload : [payload];
+      return samples.map((sample, index) => {
+        const forecast = locations[index];
+        if (!forecast?.hourly?.time?.length) throw new Error("Weather forecast is missing for part of this route.");
+        const target = tripTime.slice(0, 13);
+        let hourIndex = forecast.hourly.time.findIndex((time) => time.slice(0, 13) === target);
+        if (hourIndex < 0) {
+          hourIndex = forecast.hourly.time.findIndex((time) => time >= target);
+          if (hourIndex < 0) hourIndex = forecast.hourly.time.length - 1;
+        }
+        return {
+          ...sample,
+          rain: forecast.hourly.precipitation_probability?.[hourIndex] ?? 0,
+          code: forecast.hourly.weather_code?.[hourIndex] ?? -1,
+          temperature: forecast.hourly.temperature_2m?.[hourIndex]
+        };
+      });
+    }
+
+    function renderRouteSummary(samples, route, isLive) {
+      const wettest = samples.reduce((best, sample) => sample.rain > best.rain ? sample : best, samples[0]);
+      $("#route-summary-title").textContent = wettest.rain >= 60
+        ? `Rain likely near ${wettest.name}`
+        : wettest.rain >= 30
+          ? `Showers possible near ${wettest.name}`
+          : "Mostly clear along this route";
+      const tripDate = new Date($("#trip-time").value);
+      const dateText = Number.isNaN(tripDate.getTime())
+        ? "selected time"
+        : new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }).format(tripDate);
+      const distance = route.distance >= 1000 ? `${(route.distance / 1000).toFixed(1)} km` : `${Math.round(route.distance)} m`;
+      const duration = Math.max(1, Math.round(route.duration / 60));
+      $("#route-summary-meta").textContent =
+        `${distance} bike route · about ${duration} min · ${dateText} · ${isLive ? "forecast estimate" : "weather unavailable"}${isLive ? " — not live radar" : ""}`;
+      const list = $("#route-stops");
+      list.replaceChildren();
+      samples.forEach((sample) => {
+        const card = document.createElement("div");
+        card.className = "route-stop";
+        const name = document.createElement("div");
+        name.className = "route-stop-name";
+        name.textContent = sample.name;
+        const weather = document.createElement("div");
+        weather.className = "route-stop-weather";
+        weather.textContent = isLive ? `${conditionFor(sample.code)}${Number.isFinite(sample.temperature) ? ` · ${Math.round(sample.temperature)}°` : ""}` : "Forecast unavailable";
+        const rain = document.createElement("div");
+        rain.className = "route-stop-rain";
+        rain.style.color = isLive ? weatherColor(sample) : "var(--muted)";
+        rain.textContent = isLive ? `${sample.rain}% rain chance` : "No live data";
+        card.append(name, weather, rain);
+        list.append(card);
+      });
+      $("#route-summary").hidden = false;
+    }
+
+    $("#route-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = $("#route-form button");
+      button.disabled = true;
+      button.textContent = "Planning…";
+      $("#route-status").classList.remove("error");
+      $("#route-status").textContent = "Finding a cycling route…";
+      $("#route-summary").hidden = true;
+      try {
+        const tripTime = new Date($("#trip-time").value).getTime();
+        if (!Number.isFinite(tripTime) || tripTime < Date.now() - 60 * 60 * 1000 || tripTime > Date.now() + 5 * 24 * 60 * 60 * 1000) {
+          throw new Error("Choose a trip time within the next five days to see its forecast.");
+        }
+        routeStart = await resolveRouteLocation($("#route-start").value, routeStart);
+        routeEnd = await resolveRouteLocation($("#route-end").value, routeEnd);
+        const coords = `${routeStart.longitude},${routeStart.latitude};${routeEnd.longitude},${routeEnd.latitude}`;
+        const response = await fetch(`https://routing.openstreetmap.de/routed-bike/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`);
+        if (!response.ok) throw new Error("Could not find a bike route between those places.");
+        const result = await response.json();
+        if (!result.routes?.length || !result.routes[0].geometry?.coordinates?.length) {
+          throw new Error("No cycling route found. Try different start and destination points.");
+        }
+        const route = result.routes[0];
+        routeGeometry = route.geometry.coordinates;
+        fitRoute(routeGeometry);
+        const samplePoints = sampleRoute(routeGeometry);
+        $("#route-status").textContent = "Checking forecast along the route…";
+        try {
+          routeWeather = await getRouteWeather(samplePoints, $("#trip-time").value);
+          renderRouteSummary(routeWeather, route, true);
+          $("#route-status").textContent = "Forecast sampled at seven points along the bike route. Rain probability is a model estimate, not radar.";
+        } catch (error) {
+          routeWeather = [];
+          renderRouteSummary(samplePoints.map((sample) => ({ ...sample, rain: 0, code: -1 })), route, false);
+          $("#route-status").textContent = `${error.message} The cycling route is shown without weather colors.`;
+          $("#route-status").classList.add("error");
+        }
+        drawMap();
+        updateRouteHint("Drag to pan · use + / − or scroll to zoom · click to choose new route points");
+      } catch (error) {
+        $("#route-status").textContent = error.message || "Unable to plan this route.";
+        $("#route-status").classList.add("error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Check route";
+      }
+    });
+
+    setDefaultTripTime();
+    drawMap();
+    if ("ResizeObserver" in window) new ResizeObserver(drawMap).observe(mapCanvas);
+
+    const initialPlace = { name: "Matara", country: "Sri Lanka", latitude: 5.9549, longitude: 80.555 };
+    render(makeFallbackDates(), initialPlace, true);
+    loadPlace(initialPlace);
+  </script>
+</body>
+</html>
